@@ -25,24 +25,26 @@ jobs:
         run: |
           mkdir project
           unzip -q magic-ball-mi-band-10-github-build.zip -d project
+
           echo "Project contents:"
-          find project -maxdepth 4 -type f | sort
+          find project -maxdepth 5 -type f | sort
 
       - name: Install Xiaomi AIoT Toolkit
-        working-directory: project
+        working-directory: project/magic-ball-mi-band-10-github-build
         run: npm install --no-audit --no-fund
 
       - name: Check project
-        working-directory: project
+        working-directory: project/magic-ball-mi-band-10-github-build
         run: npm run check
 
       - name: Build RPK
-        working-directory: project
+        working-directory: project/magic-ball-mi-band-10-github-build
         run: npm run build
 
       - name: Collect RPK
         run: |
           mkdir artifact
+
           find project -type f -name "*.rpk" -print
           find project -type f -name "*.rpk" -exec cp {} artifact/ \;
 
@@ -53,6 +55,7 @@ jobs:
             exit 1
           fi
 
+          echo "Built RPK:"
           ls -lh artifact
 
       - name: Upload RPK
