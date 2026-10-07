@@ -1,0 +1,64 @@
+name: Build Magic Ball RPK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Extract project
+        run: |
+          mkdir project
+          unzip -q magic-ball-mi-band-10-github-build.zip -d project
+          echo "Project contents:"
+          find project -maxdepth 4 -type f | sort
+
+      - name: Install Xiaomi AIoT Toolkit
+        working-directory: project
+        run: npm install --no-audit --no-fund
+
+      - name: Check project
+        working-directory: project
+        run: npm run check
+
+      - name: Build RPK
+        working-directory: project
+        run: npm run build
+
+      - name: Collect RPK
+        run: |
+          mkdir artifact
+          find project -type f -name "*.rpk" -print
+          find project -type f -name "*.rpk" -exec cp {} artifact/ \;
+
+          COUNT=$(find artifact -type f -name "*.rpk" | wc -l)
+
+          if [ "$COUNT" -eq 0 ]; then
+            echo "ERROR: RPK was not created"
+            exit 1
+          fi
+
+          ls -lh artifact
+
+      - name: Upload RPK
+        uses: actions/upload-artifact@v4
+        with:
+          name: magic-ball-mi-band-10-rpk
+          path: artifact/*.rpk
+          if-no-files-found: error
+          retention-days: 30
